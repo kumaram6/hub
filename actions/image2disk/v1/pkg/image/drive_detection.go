@@ -15,12 +15,7 @@ type DriveInfo struct {
 	Type string
 }
 
-func DriveDetection() (string, error) {
-	// Get a list of drives
-	drives, err := getDrives()
-	if err != nil {
-		return "", err
-	}
+func DriveDetection(drives []DriveInfo) (string, error) {
 	// Sort drives based on the defined criteria
 	sort.Sort(bySizeAndPriority(drives))
 
@@ -58,7 +53,7 @@ func (e *CustomError) Error() string {
 	return e.Message
 }
 
-func getDrives() ([]DriveInfo, error) {
+func GetDrives() ([]DriveInfo, error) {
 	var drives []DriveInfo
 
 	// Command to list all connected storage devices with sizes using lsblk
@@ -130,11 +125,9 @@ func (a bySizeAndPriority) Less(i, j int) bool {
 	if a[i].Size == a[j].Size {
 		if strings.HasPrefix(a[i].Name, "nvme") {
 			return true
-		} else if strings.HasPrefix(a[j].Name, "nvme") {
-			return false
 		} else {
-			return strings.HasPrefix(a[i].Name, "sda")
+			return false
 		}
 	}
-	return a[i].Size > a[j].Size
+	return a[i].Size < a[j].Size
 }
