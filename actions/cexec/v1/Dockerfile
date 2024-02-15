@@ -11,6 +11,7 @@ RUN --mount=type=cache,sharing=locked,id=gomod,target=/go/pkg/mod/cache \
     CGO_ENABLED=1 GOOS=linux go build -a -ldflags "-linkmode external -extldflags '-static' -s -w" -o cexec
 
 # Build final image
-FROM scratch
+FROM alpine:3.14
+RUN apk add --no-cache lsblk
 COPY --from=cexec /go/src/github.com/thebsdbox/cexec/cexec .
 ENTRYPOINT ["/cexec"]
