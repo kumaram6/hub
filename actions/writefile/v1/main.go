@@ -19,10 +19,40 @@ func main() {
 	fmt.Printf("WriteFile - Write file to disk\n------------------------\n")
 
 	blockDevice := os.Getenv("DEST_DISK")
+	driveName := ""
+	// Check if a string is empty
+	if len(blockDevice) == 0 {
+		// Get a list of drives
+		drives, err := GetDrives()
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		detectedDisk, err := DriveDetection(drives)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		log.Infof("Detected drive: [%s] ", detectedDisk)
+		blockDevice = detectedDisk + "rootPart"
+		driveName = detectedDisk
+	} else {
+		log.Infof("Drive provided by the user: [%s] ", blockDevice)
+	}
+
 	filesystemType := os.Getenv("FS_TYPE")
 	filePath := os.Getenv("DEST_PATH")
 
 	contents := os.Getenv("CONTENTS")
+	contents = strings.ReplaceAll(contents, "driveName", driveName)
+
+	// Check if the drive name starts with "/dev/nvme"
+	if strings.HasPrefix(driveName, "/dev/nvme") {
+		contents = strings.Replace(driveName, "ID", "p1", 1)
+	} else {
+		contents = strings.Replace(driveName, "ID", "1", 1)
+	}
+
 	uid := os.Getenv("UID")
 	gid := os.Getenv("GID")
 	mode := os.Getenv("MODE")

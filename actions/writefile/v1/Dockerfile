@@ -12,7 +12,8 @@ RUN --mount=type=cache,sharing=locked,id=gomod,target=/go/pkg/mod/cache \
     CGO_ENABLED=1 GOOS=linux go build -a -ldflags "-linkmode external -extldflags '-static' -s -w" -o writefile
 
 # Build final image
-FROM scratch
+FROM alpine:3.14
+RUN apk add --no-cache lsblk
 # Add Certificates into the image, for anything that does HTTPS calls
 COPY --from=writefile /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=writefile /go/src/github.com/tinkerbell/hub/actions/writefile/v1/writefile .
