@@ -1,3 +1,15 @@
+/* #####################################################################################
+# INTEL CONFIDENTIAL                                                                #
+# Copyright (C) 2024 Intel Corporation                                              #
+# This software and the related documents are Intel copyrighted materials,          #
+# and your use of them is governed by the express license under which they          #
+# were provided to you ("License"). Unless the License provides otherwise,          #
+# you may not use, modify, copy, publish, distribute, disclose or transmit          #
+# this software or the related documents without Intel's prior written permission.  #
+# This software and the related documents are provided as is, with no express       #
+# or implied warranties, other than those that are expressly stated in the License. #
+#####################################################################################*/
+
 package image
 
 import (
@@ -123,11 +135,21 @@ func (a bySizeAndPriority) Len() int      { return len(a) }
 func (a bySizeAndPriority) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a bySizeAndPriority) Less(i, j int) bool {
 	if a[i].Size == a[j].Size {
-		if strings.HasPrefix(a[i].Name, "nvme") {
+		// If sizes are equal
+		if strings.HasPrefix(a[i].Name, "nvme") && !strings.HasPrefix(a[j].Name, "nvme") {
+			// If only i has nvme prefix
 			return true
-		} else {
+		} else if !strings.HasPrefix(a[i].Name, "nvme") && strings.HasPrefix(a[j].Name, "nvme") {
+			// If only j has nvme prefix
 			return false
+		} else if strings.HasPrefix(a[i].Name, "nvme") && strings.HasPrefix(a[j].Name, "nvme") {
+			// If both have nvme prefix, choose chronologically
+			return a[i].Name < a[j].Name
+		} else {
+			// If none have nvme prefix, choose chronologically
+			return a[i].Name < a[j].Name
 		}
 	}
+	// Choose the drive with smallest size
 	return a[i].Size < a[j].Size
 }
