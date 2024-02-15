@@ -20,6 +20,7 @@ func main() {
 
 	blockDevice := os.Getenv("DEST_DISK")
 	driveName := ""
+	rootPart := ""
 	// Check if a string is empty
 	if len(blockDevice) == 0 {
 		// Get a list of drives
@@ -34,7 +35,6 @@ func main() {
 			return
 		}
 		log.Infof("Detected drive: [%s] ", detectedDisk)
-		blockDevice = detectedDisk + "rootPart"
 		driveName = detectedDisk
 	} else {
 		log.Infof("Drive provided by the user: [%s] ", blockDevice)
@@ -44,14 +44,17 @@ func main() {
 	filePath := os.Getenv("DEST_PATH")
 
 	contents := os.Getenv("CONTENTS")
-	contents = strings.ReplaceAll(contents, "driveName", driveName)
+	contents = strings.ReplaceAll(contents, "$DEST_DISK", driveName)
 
 	// Check if the drive name starts with "/dev/nvme"
 	if strings.HasPrefix(driveName, "/dev/nvme") {
-		contents = strings.Replace(driveName, "ID", "p1", 1)
+		rootPart = "p1"
 	} else {
-		contents = strings.Replace(driveName, "ID", "1", 1)
+		rootPart = "1"
 	}
+
+	blockDevice = driveName + rootPart
+	contents = strings.Replace(contents, "$ID", rootPart, 1)
 
 	uid := os.Getenv("UID")
 	gid := os.Getenv("GID")
