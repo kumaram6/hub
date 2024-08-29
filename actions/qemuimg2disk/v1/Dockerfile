@@ -5,6 +5,8 @@ ENV QEMU_SRC_BASENAME="${QEMU_NAME}-${QEMU_REV}"
 ENV QEMU_SRC_URL="https://download.qemu.org/${QEMU_SRC_BASENAME}.tar.xz"
 
 RUN apk add --update --upgrade \
+    wget \
+    curl \
     gcc \
     glib-dev glib-static \
     libc-dev \
@@ -17,6 +19,18 @@ RUN apk add --update --upgrade \
     zlib-dev zlib-static \
     bash git parted patch xz \
     curl-dev curl-static nettle-dev nettle-static brotli-dev brotli-static nghttp2-dev nghttp2-static openssl-libs-static
+
+# Create output directories
+RUN mkdir -p /out/lib /out/usr/bin /out/etc/ssl/certs
+
+# Copy curl binary
+RUN cp /usr/bin/curl /out/usr/bin/
+
+# Find all dependencies of curl and copy them to the output directory
+RUN ldd /usr/bin/curl | awk '{print $3}' | grep '^/' | xargs -I '{}' cp -v '{}' /out/lib/
+
+# Copy SSL certificates
+RUN cp -r /etc/ssl/certs /out/etc/ssl
 
 WORKDIR /work
 RUN wget "${QEMU_SRC_URL}" -O- | tar xJ
@@ -51,6 +65,9 @@ COPY --from=builder /bin/sh /bin/sh
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /lib/ld-musl*  /lib/
 COPY --from=partprobe /src/partprobe /bin/partprobe
+
+COPY --from=builder /out /
+
 COPY entrypoint.sh /entrypoint.sh
 
 FROM scratch
